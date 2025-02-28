@@ -1,37 +1,44 @@
 `user strict`
 
 import jwt from "jsonwebtoken"
+import User from "../admin/admin.model.js"
 
-export const validateJWT = async (req, res, next) =>{
-    try{
-        let token = req.body.token || req.query.token || req.headers["authorization"]
+export const validarJWT = async(req, res, next) => {
 
-        if(!token){
+    const token = req.header('x-token');
+
+    if(!token){
+        return res.status(401).json({
+            msg: 'No hay token en la peticion'
+        })
+    }
+
+    try {
+        
+        const {uid} = jwt.verify(token, process.env.SECRETKEY);
+
+        const user = await User.findById(uid);
+
+        if(!user){
             return res.status(401).json({
-                success: false,
-                message: "No se proporcionó un token en la petición"
+                msg: 'usuario no existe en la base de datos'
             })
         }
 
-        token = token.replace(/^Bearer\s+/, "");
-
-        const { uid } = jwt.verify(token, process.env.SECRETORPRIVATEKEY)
-        const admin = await Admin.findById(uid)
-
-        if(!admin){
-            return res.status(400).json({
-                success: false,
-                message: "Administrador no existe en la Base de Datos"
+        if(!user.state) {
+            return res.status(401).json({
+                msg: 'Token no valido'
             })
         }
 
-        req.admin = admin
-        next()
-    }catch(err){
-        return res.status(500).json({
-            success: false,
-            message: "Error al validar el token",
-            error: err.message
+        req.user = user;
+
+        next();
+
+    } catch (e) {
+        console.log(e);
+        res.status(401).json({
+            msg: 'Token no valido'
         })
     }
 }

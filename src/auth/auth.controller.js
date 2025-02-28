@@ -7,6 +7,7 @@ export const register = async (req, res) => {
     try{
         const data = req.body
         const encryptedPassword = await hash(data.password)
+        data.role = "ADMIN_ROLE"
         data.password = encryptedPassword
         
         const admin = await Admin.create(data)
