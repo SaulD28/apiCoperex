@@ -5,8 +5,9 @@ import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
 import { dbConnection } from "./mongo.js"
+import { createAdmin } from "../src/admin/admin.controller.js"
 import apiLimiter from "../src/middlewares/rate-limit-validator.js"
-
+import { swaggerDocs, swaggerUi } from "./swagger.js"
 
 const middlewares = (app) => {
     app.use(express.urlencoded({ extended: false}))
@@ -29,9 +30,14 @@ const middlewares = (app) => {
     }))
 }
 
+const routes = (app) => {
+    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs))
+} 
+
 const conectarDB = async () => {
     try{
         await dbConnection();
+        createAdmin()
     }catch (err){
         console.log(`Database connection failed: ${err}`)
         process.exit(1);
