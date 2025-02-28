@@ -5,6 +5,7 @@ import cors from "cors"
 import helmet from "helmet"
 import morgan from "morgan"
 import { dbConnection } from "./mongo.js"
+import authRoutes from "../src/auth/auth.routes.js"
 import { createAdmin } from "../src/admin/admin.controller.js"
 import apiLimiter from "../src/middlewares/rate-limit-validator.js"
 import { swaggerDocs, swaggerUi } from "./swagger.js"
@@ -28,9 +29,12 @@ const middlewares = (app) => {
             },
         }
     }))
+    app.use(morgan("dev"))
+    app.use(apiLimiter);
 }
 
 const routes = (app) => {
+    app.use("/apiCoperex/v1/auth", authRoutes)
     app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs))
 } 
 
@@ -49,6 +53,7 @@ export const initServer = () => {
     try{
         middlewares(app);
         conectarDB()
+        routes(app)
         app.listen(process.env.PORT);
         console.log(`Server running on port ${process.env.PORT}`)
     }catch (err){
